@@ -1,12 +1,11 @@
-import { RulesData } from "./rules";
+import { RuleConfig } from "../types/types";
 
-export const rulesConfig: RulesData = {
+export const RULES_CONFIG: { rules: RuleConfig[] } = {
   rules: [
     {
       type: "specific_collections",
       label: "Specific Collection",
       priority: 1,
-      mutuallyExclusiveWith: ["specific_products"],
       operators: [
         {
           value: "contains_any",
@@ -21,12 +20,28 @@ export const rulesConfig: RulesData = {
       placeholder: "Select collections",
       options: [
         {
-          value: "ITEM1",
-          label: "i 1",
+          value: "Car_Collection",
+          label: "Car Collection",
         },
         {
-          value: "ITEM2",
-          label: "i 3",
+          value: "Books_Collection",
+          label: "Books Collection",
+        },
+        {
+          value: "Cards_Collection",
+          label: "Cards Collection",
+        },
+        {
+          value: "Shoes_Collection",
+          label: "Shoes Collection",
+        },
+        {
+          value: "Coin_Collection",
+          label: "Coin Collection",
+        },
+        {
+          value: "Stamp_Collection",
+          label: "Stamp Collection",
         },
       ],
     },
@@ -48,12 +63,12 @@ export const rulesConfig: RulesData = {
       placeholder: "Search product tags",
       options: [
         {
-          value: "ITEM1",
-          label: "i 1",
+          value: "Frequently_Bought",
+          label: "Frequently Bought",
         },
         {
-          value: "ITEM2",
-          label: "i 3",
+          value: "Limited_Edition",
+          label: "Limited_Edition",
         },
       ],
     },
@@ -61,7 +76,6 @@ export const rulesConfig: RulesData = {
       type: "specific_products",
       label: "Specific Product",
       priority: 3,
-      mutuallyExclusiveWith: ["specific_collections"],
       operators: [
         {
           value: "equals_anything",
@@ -81,43 +95,36 @@ export const rulesConfig: RulesData = {
       placeholder: "Search products",
       options: [
         {
-          value: "ITEM1",
-          label: "i 1",
+          value: "Asian_Shoes",
+          label: "Asian Shoes",
         },
         {
-          value: "ITEM2",
-          label: "i 3",
+          value: "Front_Bumper",
+          label: "Front Bumper",
         },
       ],
-    },
-    {
-      type: "product_subscribed",
-      label: "Product Subscribed",
-      priority: 4,
-      operators: [
-        {
-          value: "yes",
-          label: "Yes",
-        },
-        {
-          value: "no",
-          label: "No",
-        },
-      ],
-      inputType: "select",
     },
     {
       type: "specific_discount_codes",
       label: "Specific Discount Codes",
-      priority: 5,
-      operators: [],
+      priority: 4,
+      operators: [
+        {
+          value: "50",
+          label: "upto 50%",
+        },
+        {
+          value: "20",
+          label: "upto 20%",
+        },
+      ],
       inputType: "text",
-      placeholder: "code, free",
+      placeholder: "actual value",
     },
     {
       type: "cart_value_range",
       label: "Cart Value Range",
-      priority: 6,
+      priority: 5,
       operators: [
         {
           value: "is_equal_or_greater_than",
@@ -134,28 +141,6 @@ export const rulesConfig: RulesData = {
       ],
       inputType: "number",
       placeholder: "Enter amount",
-    },
-  ],
-  otherCategories: [
-    {
-      name: "Customer based",
-      items: ["Customer specific", "Customer tag", "Past order count"],
-    },
-    {
-      name: "Location based",
-      items: ["Specific countries"],
-    },
-    {
-      name: "Language based",
-      items: ["Specific locales"],
-    },
-    {
-      name: "Cart based",
-      items: [
-        "Cart value range",
-        "Count of items in cart",
-        "Individual product count in cart",
-      ],
     },
   ],
 };

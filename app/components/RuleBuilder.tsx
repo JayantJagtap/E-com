@@ -1,69 +1,44 @@
-// RuleBuilder.tsx
-// import React, { useState, useMemo } from 'react';
-// import { SelectInput } from './components/SelectInput';
-// import { TextInput } from './components/TextInput';
-// import { RuleDisplay } from './components/RuleDisplay';
-// import { Rule, RulesData, RuleConfig } from './types';
+import React, { useState } from 'react';
+import RuleItem from './RuleItem';
+import { Rule } from '../types/types';
+import { RULES_CONFIG } from '../constants/constants';
+import MultiSelectDropdown from './MultiSelectDropdown';
 
-
-import React, { useState, useMemo } from "react";
-import { Rule, RuleConfig } from "../types/rules";
-import { RuleDisplay } from "./RuleDisplay";
-import { SelectInput } from "./SelectInput";
-import { TextInput } from "./TextInput";
-import { rulesConfig } from "../types/rulesConfig";
-
-export const RuleBuilder: React.FC = () => {
-    // State management
+const RuleTest: React.FC = () => {
     const [rules, setRules] = useState<Rule[]>([]);
     const [selectedRuleType, setSelectedRuleType] = useState('');
     const [selectedOperator, setSelectedOperator] = useState('');
-    const [inputValue, setInputValue] = useState('');
+    const [inputValue, setInputValue] = useState<string>('');
+    const [multiSelectValues, setMultiSelectValues] = useState<string[]>([]);
 
-    // Memoized derived values
-    const selectedRule = useMemo(
-        () => rulesConfig.rules.find((rule) => rule.type === selectedRuleType),
-        [selectedRuleType]
-    );
+    const selectedRule = RULES_CONFIG.rules.find(rule => rule.type === selectedRuleType);
 
-    const ruleTypeOptions = useMemo(
-        () =>
-            rulesConfig.rules.map((rule) => ({
-                value: rule.type,
-                label: rule.label,
-            })),
-        []
-    );
-
-    const operatorOptions = useMemo(
-        () =>
-            selectedRule?.operators.map((op) => ({
-                value: op.value,
-                label: op.label,
-            })) || [],
-        [selectedRule]
-    );
-
-    // Handlers
     const handleAddRule = (logicalOperator: string) => {
-        if (!selectedRuleType || !selectedOperator || !selectedRule) return;
+        if (selectedRuleType && selectedOperator) {
+            const valueToUse = selectedRule?.inputType === 'select' && selectedOperator !== 'equals_anything'
+                ? multiSelectValues
+                : inputValue;
 
-        const newRule: Rule = {
-            type: selectedRuleType,
-            operator: selectedOperator,
-            value: inputValue,
-            label: selectedRule.label,
-            logicalOperator: rules.length > 0 ? logicalOperator : null,
-        };
+            const newRule: Rule = {
+                type: selectedRuleType,
+                operator: selectedOperator,
+                value: valueToUse,
+                label: selectedRule?.label || '',
+                logicalOperator: logicalOperator
+            };
 
-        setRules([...rules, newRule]);
-        resetSelections();
+            setRules([...rules, newRule]);
+            setSelectedRuleType('');
+            setSelectedOperator('');
+            setInputValue('');
+            setMultiSelectValues([]);
+        }
     };
 
-    const resetSelections = () => {
-        setSelectedRuleType('');
-        setSelectedOperator('');
-        setInputValue('');
+    const handleUpdateRule = (index: number, updatedRule: Rule) => {
+        const updatedRules = [...rules];
+        updatedRules[index] = updatedRule;
+        setRules(updatedRules);
     };
 
     const handleRemoveRule = (index: number) => {
@@ -71,151 +46,130 @@ export const RuleBuilder: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold mb-4">Build Your Rules</h2>
+        <div className="p-4">
+            {/* Display existing rules */}
+            {rules.length > 0 && (
+                <div className="mb-6">
+                    {rules.map((rule, index) => (
+                        <RuleItem
+                            key={index}
+                            rule={rule}
+                            ruleConfigs={RULES_CONFIG.rules}
+                            onUpdate={(updatedRule) => handleUpdateRule(index, updatedRule)}
+                            onRemove={() => handleRemoveRule(index)}
+                        />
+                    ))}
+                </div>
+            )}
 
-                <div className="flex gap-2">
-                    {/* Rule Type Selection */}
-                    <SelectInput
-                        label="Rule Type"
+            {/* Add new rule section */}
+            <div className='flex gap-2'>
+                {/* Rule Type Selection */}
+                <div className="mb-4 flex-1">
+                    <select
                         value={selectedRuleType}
-                        onChange={(value) => {
-                            setSelectedRuleType(value);
+                        onChange={(e) => {
+                            setSelectedRuleType(e.target.value);
                             setSelectedOperator('');
                         }}
-                        options={ruleTypeOptions}
-                        placeholder="Select a rule type"
-                    />
-
-                    {/* Operator Selection */}
-                    {selectedRule && (
-                        <SelectInput
-                            label="Operator"
-                            value={selectedOperator}
-                            onChange={setSelectedOperator}
-                            options={operatorOptions}
-                            placeholder="Select an operator"
-                        />
-                    )}
-
-                    {/* Dynamic Value Input */}
-                    {selectedRule && selectedOperator && (
-                        <RuleValueInput
-                            rule={selectedRule}
-                            value={inputValue}
-                            onChange={setInputValue}
-                        />
-                    )}
+                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="">Select a rule type</option>
+                        {RULES_CONFIG.rules.map((rule) => (
+                            <option key={rule.type} value={rule.type}>
+                                {rule.label}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
-                {/* AND/OR Buttons */}
+                {/* Operator Selection */}
+                {selectedRule && (
+                    <div className="mb-4 flex-1">
+                        <select
+                            value={selectedOperator}
+                            onChange={(e) => setSelectedOperator(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                            <option value="">Select an operator</option>
+                            {selectedRule.operators.map((op) => (
+                                <option key={op.value} value={op.value}>
+                                    {op.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* Value Input */}
+                {selectedRule && selectedOperator && (
+                    <div className="mb-4 flex-1">
+
+                        {selectedRule.inputType === 'text' && (
+                            <input
+                                type="text"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                placeholder={selectedRule.placeholder}
+                                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                        )}
+                        {selectedRule.inputType === 'number' && (
+                            <input
+                                type="number"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                placeholder={selectedRule.placeholder}
+                                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                        )}
+                        {selectedRule.inputType === 'select' && selectedOperator === 'equals_anything' && (
+                            <select
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">{selectedRule.placeholder || 'Select an option'}</option>
+                                {selectedRule.options?.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                        {selectedRule.inputType === 'select' && selectedOperator !== 'equals_anything' && (
+                            <MultiSelectDropdown
+                                options={selectedRule.options || []}
+                                selectedValues={multiSelectValues}
+                                onChange={setMultiSelectValues}
+                                placeholder={selectedRule.placeholder}
+                            />
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* AND/OR Buttons */}
+            <div className='flex justify-center align center'>
                 {selectedRuleType && selectedOperator && (
                     <div className="flex gap-2 mt-4">
                         <button
                             onClick={() => handleAddRule('AND')}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                            className="px-4 py-2 rounded-md border-1 hover:bg-gray-100"
                         >
-                            AND
+                            +  AND
                         </button>
                         <button
                             onClick={() => handleAddRule('OR')}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                            className="px-4 py-2 rounded-md border-1 hover:bg-gray-100"
                         >
-                            OR
+                            +  OR
                         </button>
                     </div>
-                )}
-
-                {/* Display Added Rules */}
-                {rules.length > 0 && (
-                    <RulesList rules={rules} onRemoveRule={handleRemoveRule} />
                 )}
             </div>
         </div>
     );
 };
 
-// Helper component for dynamic value input
-interface RuleValueInputProps {
-    rule: RuleConfig;
-    value: string;
-    onChange: (value: string) => void;
-}
-
-const RuleValueInput: React.FC<RuleValueInputProps> = ({
-    rule,
-    value,
-    onChange,
-}) => {
-    const label = `${rule.label} Value`;
-
-    switch (rule.inputType) {
-        case 'text':
-            return (
-                <TextInput
-                    label={label}
-                    value={value}
-                    onChange={onChange}
-                    placeholder={rule.placeholder}
-                />
-            );
-        case 'number':
-            return (
-                <TextInput
-                    label={label}
-                    value={value}
-                    onChange={onChange}
-                    placeholder={rule.placeholder}
-                    type="number"
-                />
-            );
-        case 'select':
-        case 'multi-select':
-            return (
-                <SelectInput
-                    label={label}
-                    value={value}
-                    onChange={onChange}
-                    options={rule.options || []}
-                    placeholder={rule.placeholder}
-                />
-            );
-        default:
-            return null;
-    }
-};
-
-// Helper component for displaying rules list
-interface RulesListProps {
-    rules: Rule[];
-    onRemoveRule: (index: number) => void;
-}
-
-const RulesList: React.FC<RulesListProps> = ({ rules, onRemoveRule }) => {
-    return (
-        <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Current Rules</h3>
-            <ul className="space-y-2">
-                {rules.map((rule, index) => (
-                    <React.Fragment key={index}>
-                        {index > 0 && (
-                            <li className="text-center">
-                                <span className="inline-block px-2 py-1 bg-gray-200 rounded-md text-sm font-medium">
-                                    {rule.logicalOperator}
-                                </span>
-                            </li>
-                        )}
-                        <RuleDisplay
-                            rule={rule}
-                            onRemove={() => onRemoveRule(index)}
-                        />
-                    </React.Fragment>
-                ))}
-            </ul>
-
-
-        </div>
-
-    );
-};
+export default RuleTest;
